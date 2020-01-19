@@ -5,7 +5,7 @@
 Querying the Database of DVD Rental Shops in PostgreSQL
 
 ### Description
-This project shows descripted business data upon to assist users get meaningful insights of DVD Rental Shop.
+This project shows descripted business data to assist users get meaningful insights of DVD Rental Shop.
 
 ### Files used
 dvdrental.tar
