@@ -1,0 +1,93 @@
+/*****Query 1*****/
+
+
+WITH t1 AS (
+SELECT f.title film_title, c.name category_name, count(*) rental_count
+FROM category c
+JOIN film_category fc
+ON fc.category_id = c.category_id AND c.name IN ('Animation','Children','Classics','Comedy','Family','Music')
+JOIN film f
+ON f.film_id = fc.film_id
+JOIN inventory i
+ON i.film_id = f.film_id
+JOIN rental r
+ON r.inventory_id = i.inventory_id
+GROUP BY 1,2)
+
+SELECT category_name, SUM(rental_count)
+FROM t1
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+/*****Query 2*****/
+
+
+WITH t1 AS(
+SELECT DATE_TRUNC('month',r.rental_date) rental_month, s.store_id rental_store, count(*) rental_count
+FROM rental r
+JOIN staff s
+ON s.staff_id = r.staff_id
+GROUP BY 1,2)
+
+SELECT DATE_PART('month',rental_month) rental_month, DATE_PART('year', rental_month) rental_year, rental_store, rental_count
+FROM t1
+ORDER BY 4 DESC;
+
+
+/*****Query 3*****/
+
+
+WITH t1 AS(
+SELECT CONCAT(c.first_name,c.last_name) fullname, SUM(p.amount) 
+FROM customer c
+JOIN payment p
+ON p.customer_id = c.customer_id
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10),
+
+t2 AS(
+SELECT DATE_TRUNC('month', p.payment_date) pay_mon, CONCAT(c.first_name,c.last_name) fullname, COUNT(*) pay_countpermon, SUM(p.amount) pay_amount
+FROM customer c
+JOIN payment p
+ON p.customer_id = c.customer_id
+GROUP BY 1,2)
+
+SELECT t2.*
+FROM t2
+JOIN t1
+ON t1.fullname = t2.fullname
+ORDER BY 2,1;
+
+
+/*****Query 4*****/
+
+
+WITH t1 AS(
+SELECT CONCAT(c.first_name,c.last_name) fullname, SUM(p.amount) 
+FROM customer c
+JOIN payment p
+ON p.customer_id = c.customer_id
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10),
+
+t2 AS(
+SELECT DATE_TRUNC('month', p.payment_date) pay_mon, CONCAT(c.first_name,c.last_name) fullname, COUNT(*) pay_countpermon, SUM(p.amount) pay_amount
+FROM customer c
+JOIN payment p
+ON p.customer_id = c.customer_id
+GROUP BY 1,2),
+
+t3 AS(
+SELECT t2.*
+FROM t2
+JOIN t1
+ON t1.fullname = t2.fullname
+ORDER BY 2,1)
+
+SELECT t3.pay_mon, t3.fullname, t3.pay_amount,
+t3.pay_amount - LAG(t3.pay_amount) OVER (PARTITION BY t3.fullname ORDER BY t3.pay_mon) difference
+FROM t3
+ORDER BY 4;
